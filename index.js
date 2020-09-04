@@ -9,36 +9,26 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 app.get('/', (req, res) => {
-  res.send(`glesys ping client`)
+  res.send({ message: 'glesys ping client'})
 })
 
 app.post('/ping', async (req, res) => {  
-  try {
-    const url = req.body.url
-    let pingResult = {}
+  const url = req.body.url
+  let pingResult = {}
 
-    await ping.promise.probe(url, { timeout: 10 })
-      .then(result => {
-        console.log(result)
-        if(result.alive) {
-          pingResult = {
-            host: url,
-            alive: result.alive,
-            time: `${result.time}ms`,
-            ip: result.numeric_host
-          }
-        } else {
-          pingResult = {
-            host: url,
-            alive: result.alive,
-          }
-        }
+  if(! url) res.status(500).send({ error: 'Needs url for ping' })
+
+  await ping.promise.probe(url, { timeout: 10 })
+    .then((result) => {
+      pingResult = {
+        host: url,
+        alive: result.alive,
+        time: result.alive ? `${result.time}ms` : null,
+        ip: result.alive ? result.numeric_host : null
+      }
     })
 
-    res.send(pingResult)
-  } catch(e) {
-    res.send(e) 
-  }
+  res.send(pingResult)
 })
 
 app.listen(port)
